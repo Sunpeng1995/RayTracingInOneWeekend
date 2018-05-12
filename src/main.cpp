@@ -1,19 +1,17 @@
 #include <iostream>
+#include <cfloat>
+#include <stdlib.h>
+#include <vector>
 #include "vec3.h"
 #include "ray.h"
+#include "sphere.h"
+#include "hitablelist.h"
+#include "camera.h"
 
-//D^2 * t + 2 * D * (O - C) * t + (O - C)^2 - R^2 = 0
-bool hit_sphere(const vec3 &center, float radius, const ray &r) {
-    vec3 oc = r.origin() - center;
-    float a = dot(r.direction(), r.direction());
-    float b = 2.0 * dot(r.direction(), oc);
-    float c = dot(oc, oc) - radius * radius;
-    return (b*b - 4*a*c > 0);
-}
-
-vec3 color(const ray& r) {
-    if (hit_sphere(vec3(0, 0, -1), 0.5, r)) {
-        return vec3(1, 0, 0);
+vec3 color(const ray &r, const hitable *world) {
+    hit_record rec;
+    if (world->hit(r, 0.0, FLT_MAX, rec)) {
+        return 0.5 * (rec.normal + vec3(1,1,1));
     }
     vec3 unit_dir = r.direction().normalize();
     float t = 0.5 * (unit_dir.y() + 1.0);
@@ -21,19 +19,29 @@ vec3 color(const ray& r) {
 }
 
 int main() {
-    int nx = 200;
-    int ny = 100;
+    int nx = 800;
+    int ny = 400;
+    int ns = 100;
+
     std::cout << "P3\n" << nx << " " << ny << "\n255\n";
-    vec3 lower_left_corner(-2.0, -1.0, -1.0);
-    vec3 width(4, 0, 0);
-    vec3 height(0, 2, 0);
-    vec3 origin(0, 0, 0);
+
+    std::vector<hitable*> list;
+    list.push_back(new sphere(vec3(0, 0, -1), 0.5));
+    list.push_back(new sphere(vec3(0, -100.5, -1), 100));
+    hitable *world = new hitable_list(list);
+
+    camera cam;
+
     for (int j = ny - 1; j >= 0; j--) {
         for (int i = 0; i < nx; i++) {
-            float u = float(i) / nx;
-            float v = float(j) / ny;
-            ray r(origin, lower_left_corner + u * width + v * height);
-            vec3 col = color(r);
+            vec3 col(0, 0, 0);
+            for (int s = 0; s < ns; s++) {
+                float u = float(i + drand48()) / float(nx);
+                float v = float(j + drand48()) / float(ny);
+                ray r = cam.get_ray(u, v);
+                col = col + color(r, world);
+            }
+            col = col / float(ns);
             int ir = int(255.99 * col[0]);
             int ig = int(255.99 * col[1]);
             int ib = int(255.99 * col[2]);
