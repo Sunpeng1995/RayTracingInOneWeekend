@@ -39,6 +39,7 @@ int main() {
     list.push_back(new sphere(vec3(0, -100.5, -1), 100, new lambertian(vec3(0.8, 0.8, 0.0))));
     list.push_back(new sphere(vec3(1, 0, -1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 0)));
     list.push_back(new sphere(vec3(-1, 0, -1), 0.5, new dielectric(1.5)));
+    list.push_back(new sphere(vec3(-1, 0, -1), -0.49, new dielectric(1.5)));
     hitable *world = new hitable_list(list);
 
     camera cam;
