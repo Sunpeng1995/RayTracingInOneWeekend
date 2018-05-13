@@ -9,9 +9,9 @@
 #include "camera.h"
 #include "material.h"
 
-
 vec3 color(const ray &r, const hitable *world, int depth) {
     hit_record rec;
+    // t_min != 0, avoiding refract/reflact light hits its start point
     if (world->hit(r, 0.001, FLT_MAX, rec)) {
         ray scattered;
         vec3 attenuation;
@@ -27,6 +27,36 @@ vec3 color(const ray &r, const hitable *world, int depth) {
     return (1.0 - t) * vec3(1,1,1) + t * vec3(0.5, 0.7, 1.0);
 }
 
+hitable *random_scene() {
+    std::vector<hitable*> hitables;
+    hitables.push_back(new sphere(vec3(0, -1000, 0), 1000, new lambertian(vec3(0.5, 0.5, 0.5))));
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            float choose_mat = drand48();
+            vec3 center(a + 0.9 * drand48(), 0.2, b + 0.9 * drand48());
+            if ((center - vec3(4, 0.2, 0)).length() > 0.9) {
+                if (choose_mat < 0.8) {
+                    hitables.push_back(new sphere(center, 0.2, 
+                        new lambertian(vec3(drand48()*drand48(), drand48()*drand48(), drand48()*drand48()))));
+                }
+                else if (choose_mat < 0.95) {
+                    hitables.push_back(new sphere(center, 0.2, 
+                        new metal(vec3(0.5*(1 + drand48()), 0.5*(1 + drand48()), 0.5*(1 + drand48())), 0.5 * drand48())));
+                }
+                else {
+                    hitables.push_back(new sphere(center, 0.2, new dielectric(1.5)));
+                }
+            }
+        }
+    }
+
+    hitables.push_back(new sphere(vec3(0, 1, 0), 1.0, new dielectric(1.5)));
+    hitables.push_back(new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1))));
+    hitables.push_back(new sphere(vec3(4, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0)));
+
+    return new hitable_list(hitables);
+}
+
 int main() {
     int nx = 800;
     int ny = 400;
@@ -34,15 +64,14 @@ int main() {
 
     std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
-    std::vector<hitable*> list;
-    list.push_back(new sphere(vec3(0, 0, -1), 0.5, new lambertian(vec3(0.3, 0.3, 0.8))));
-    list.push_back(new sphere(vec3(0, -100.5, -1), 100, new lambertian(vec3(0.8, 0.8, 0.0))));
-    list.push_back(new sphere(vec3(1, 0, -1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 0)));
-    list.push_back(new sphere(vec3(-1, 0, -1), 0.5, new dielectric(1.5)));
-    list.push_back(new sphere(vec3(-1, 0, -1), -0.49, new dielectric(1.5)));
-    hitable *world = new hitable_list(list);
+    hitable *world = random_scene();
 
-    camera cam;
+    vec3 lookfrom(7,2,2);
+    vec3 lookat(3,1,0);
+    float dist_to_focus = (lookfrom - lookat).length();
+    float aperture = 0.07;
+
+    camera cam(lookfrom, lookat, vec3(0,1,0), 60, float(nx) / ny, aperture, dist_to_focus);
 
     for (int j = ny - 1; j >= 0; j--) {
         for (int i = 0; i < nx; i++) {
