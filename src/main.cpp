@@ -7,21 +7,20 @@
 #include "sphere.h"
 #include "hitablelist.h"
 #include "camera.h"
+#include "material.h"
 
-vec3 random_in_unit_sphere() {
-    vec3 p;
-    do {
-        p = 2.0 * vec3(drand48(), drand48(), drand48()) - vec3(1, 1, 1);
-    } while (dot(p, p) >= 1.0);
-    return p;
-}
 
-vec3 color(const ray &r, const hitable *world) {
+vec3 color(const ray &r, const hitable *world, int depth) {
     hit_record rec;
-    if (world->hit(r, 0.0, FLT_MAX, rec)) {
-        vec3 target = rec.position + rec.normal + random_in_unit_sphere();
-        return 0.5 * color(ray(rec.position, target - rec.position), world);
-        // return 0.5 * (rec.normal + vec3(1,1,1));
+    if (world->hit(r, 0.001, FLT_MAX, rec)) {
+        ray scattered;
+        vec3 attenuation;
+        if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
+            return attenuation * color(scattered, world, depth + 1);
+        }
+        else {
+            return vec3(0, 0, 0);
+        }
     }
     vec3 unit_dir = r.direction().normalize();
     float t = 0.5 * (unit_dir.y() + 1.0);
@@ -36,8 +35,10 @@ int main() {
     std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
     std::vector<hitable*> list;
-    list.push_back(new sphere(vec3(0, 0, -1), 0.5));
-    list.push_back(new sphere(vec3(0, -100.5, -1), 100));
+    list.push_back(new sphere(vec3(0, 0, -1), 0.5, new lambertian(vec3(0.3, 0.3, 0.8))));
+    list.push_back(new sphere(vec3(0, -100.5, -1), 100, new lambertian(vec3(0.8, 0.8, 0.0))));
+    list.push_back(new sphere(vec3(1, 0, -1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 0)));
+    list.push_back(new sphere(vec3(-1, 0, -1), 0.5, new dielectric(1.5)));
     hitable *world = new hitable_list(list);
 
     camera cam;
@@ -49,7 +50,7 @@ int main() {
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
                 ray r = cam.get_ray(u, v);
-                col = col + color(r, world);
+                col = col + color(r, world, 0);
             }
             col = col / float(ns);
             col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));

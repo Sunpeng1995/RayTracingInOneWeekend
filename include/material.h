@@ -1,0 +1,95 @@
+#ifndef __MATERIAL_H__
+#define __MATERIAL_H__
+#include "ray.h"
+#include "hitable.h"
+
+vec3 random_in_unit_sphere() {
+    vec3 p;
+    do {
+        p = 2.0 * vec3(drand48(), drand48(), drand48()) - vec3(1, 1, 1);
+    } while (dot(p, p) >= 1.0);
+    return p;
+}
+
+vec3 reflect(const vec3 &v, const vec3 &n) {
+    return v - 2 * dot(v, n) * n;
+}
+
+bool refract(const vec3 &v, const vec3 &n, float ni_over_nt, vec3 &refracted) {
+    vec3 uv = v.normalize();
+    float dt = dot(uv, n);
+    float discriminant = 1.0 - ni_over_nt * ni_over_nt * (1 - dt * dt); // == cos^2(theta)
+    if (discriminant > 0) {    // uv?
+        refracted = ni_over_nt * (uv - n*dt) - n*sqrt(discriminant);
+        return true;
+    }
+    return false;
+}
+
+class material {
+public:
+    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const = 0;
+};
+
+class lambertian : public material {
+public:
+    lambertian(const vec3 &a) : albedo(a) {}
+    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const {
+        vec3 target = rec.position + rec.normal + random_in_unit_sphere();
+        scattered = ray(rec.position, target - rec.position);
+        attenuation = albedo;
+        return true;
+    }
+
+private:
+    vec3 albedo;
+};
+
+class metal : public material {
+public:
+    metal(const vec3 &a, float f) : albedo(a) {
+        if (f < 1) fuzz = f;
+        else fuzz = 1;
+    }
+    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const {
+        vec3 reflected = reflect(r_in.direction().normalize(), rec.normal);
+        scattered = ray(rec.position, reflected + fuzz * random_in_unit_sphere());
+        attenuation = albedo;
+        return (dot(scattered.direction(), rec.normal) > 0);
+    }
+private:
+    vec3 albedo;
+    float fuzz;
+};
+
+class dielectric : public material {
+public:
+    dielectric(float ri) : ref_idx(ri) {}
+    virtual bool scatter(const ray &r_in, const hit_record &rec, vec3 &attenuation, ray &scattered) const {
+        vec3 outward_normal;
+        vec3 reflected = reflect(r_in.direction(), rec.normal);
+        float ni_over_nt;
+        attenuation = vec3(1.0, 1.0, 1.0);
+        vec3 refracted;
+        if (dot(r_in.direction(), rec.normal) > 0) {
+            outward_normal = -rec.normal;
+            ni_over_nt = ref_idx;
+        }
+        else {
+            outward_normal = rec.normal;
+            ni_over_nt = 1.0 / ref_idx;
+        }
+        if (refract(r_in.direction(), outward_normal, ni_over_nt, refracted)) {
+            scattered = ray(rec.position, refracted);
+            return true;
+        }
+        else {
+            scattered = ray(rec.position, reflected);
+            return false;
+        }
+    }
+private:
+    float ref_idx;
+};
+
+#endif
