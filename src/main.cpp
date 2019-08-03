@@ -2,12 +2,17 @@
 #include <cfloat>
 #include <stdlib.h>
 #include <vector>
+#include <ctime>
 #include "vec3.h"
 #include "ray.h"
 #include "sphere.h"
 #include "hitablelist.h"
 #include "camera.h"
 #include "material.h"
+#include "stb_image_write.h"
+
+// #define DEBUG_LOG
+#define PROFILE_LOG
 
 vec3 color(const ray &r, const hitable *world, int depth) {
     hit_record rec;
@@ -62,7 +67,7 @@ int main() {
     int ny = 400;
     int ns = 100;
 
-    std::cout << "P3\n" << nx << " " << ny << "\n255\n";
+    // std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
     hitable *world = random_scene();
 
@@ -73,21 +78,64 @@ int main() {
 
     camera cam(lookfrom, lookat, vec3(0,1,0), 60, float(nx) / ny, aperture, dist_to_focus);
 
-    for (int j = ny - 1; j >= 0; j--) {
+    char *data = new char[nx * ny * 3];
+    int progress = 0;
+
+#ifdef PROFILE_LOG
+    clock_t begin = clock();
+#endif
+
+#ifndef _OPENMP
+    std::cout << "not support openmp" << std::endl;
+#endif
+
+    for (int j = 0; j < ny; j++) {
         for (int i = 0; i < nx; i++) {
-            vec3 col(0, 0, 0);
+
+            // vec3 col(0, 0, 0);
+            float c1 = 0, c2 = 0, c3 = 0;
+            #pragma omp parallel for reduction(+:c1,c2,c3)
             for (int s = 0; s < ns; s++) {
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
                 ray r = cam.get_ray(u, v);
-                col = col + color(r, world, 0);
+                auto col = color(r, world, 0);
+                c1 += col.r();
+                c2 += col.g();
+                c3 += col.b();
             }
-            col = col / float(ns);
+
+            auto col = vec3(c1, c2, c3) / float(ns);
             col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
             int ir = int(255.99 * col[0]);
             int ig = int(255.99 * col[1]);
             int ib = int(255.99 * col[2]);
-            std::cout << ir << " " << ig << " " << ib << "\n";
+            data[((ny - 1 - j) * nx + i) * 3] = ir;
+            data[((ny - 1 - j) * nx + i) * 3 + 1] = ig;
+            data[((ny - 1 - j) * nx + i) * 3 + 2] = ib;
         }
+
+#ifdef PROFILE_LOG
+        if ((j / (ny / 100)) % 10 == 0) {
+            clock_t end = clock();
+            double t = double(end - begin) / CLOCKS_PER_SEC;
+            begin = clock();
+            progress++;
+            std::cout << "progress: " << progress * 10 << "%... cost " << t << "s" << std::endl;
+        }
+#endif
+
     }
+
+    int saveflag = stbi_write_bmp("result.bmp", nx, ny, 3, data);
+    delete[] data;
+
+#ifdef DEBUG_LOG
+    if (saveflag == 0)
+        std::cout << "save failed" << std::endl;
+    else
+        std::cout << "save success" << std::endl;
+#endif
+
+    return 0;
 }

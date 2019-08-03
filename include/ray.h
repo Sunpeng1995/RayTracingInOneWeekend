@@ -2,6 +2,12 @@
 #define __RAY_H__
 #include "vec3.h"
 
+#ifdef _WIN32
+double drand48() {
+    return (double)rand()/RAND_MAX;
+}
+#endif
+
 class ray {
 public:
     ray() {}

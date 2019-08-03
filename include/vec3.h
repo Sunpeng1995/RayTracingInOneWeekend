@@ -44,6 +44,12 @@ public:
     inline vec3 operator/(const float &t) const {
         return vec3(e[0] / t, e[1] / t, e[2] / t);
     }
+    inline vec3 operator+=(const vec3 &v2) {
+        e[0] += v2.e[0];
+        e[1] += v2.e[1];
+        e[2] += v2.e[2];
+        return *this;
+    }
 
     inline float length() const { return sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]); }
     inline float squared_length() const {
