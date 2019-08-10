@@ -6,6 +6,7 @@
 #include "vec3.h"
 #include "ray.h"
 #include "sphere.h"
+#include "moving_sphere.h"
 #include "hitablelist.h"
 #include "camera.h"
 #include "material.h"
@@ -40,15 +41,17 @@ hitable *random_scene() {
             float choose_mat = drand48();
             vec3 center(a + 0.9 * drand48(), 0.2, b + 0.9 * drand48());
             if ((center - vec3(4, 0.2, 0)).length() > 0.9) {
-                if (choose_mat < 0.8) {
-                    hitables.push_back(new sphere(center, 0.2, 
+                if (choose_mat < 0.8) { //diffuse
+                    // hitables.push_back(new sphere(center, 0.2, 
+                    //     new lambertian(vec3(drand48()*drand48(), drand48()*drand48(), drand48()*drand48()))));
+                    hitables.push_back(new moving_sphere(center, center + vec3(0, 0.5 * drand48(), 0), 0, 1, 0.2, 
                         new lambertian(vec3(drand48()*drand48(), drand48()*drand48(), drand48()*drand48()))));
                 }
-                else if (choose_mat < 0.95) {
+                else if (choose_mat < 0.95) { //metal
                     hitables.push_back(new sphere(center, 0.2, 
                         new metal(vec3(0.5*(1 + drand48()), 0.5*(1 + drand48()), 0.5*(1 + drand48())), 0.5 * drand48())));
                 }
-                else {
+                else { //glass
                     hitables.push_back(new sphere(center, 0.2, new dielectric(1.5)));
                 }
             }
@@ -76,7 +79,7 @@ int main() {
     float dist_to_focus = (lookfrom - lookat).length();
     float aperture = 0.07;
 
-    camera cam(lookfrom, lookat, vec3(0,1,0), 60, float(nx) / ny, aperture, dist_to_focus);
+    camera cam(lookfrom, lookat, vec3(0,1,0), 60, float(nx) / ny, aperture, dist_to_focus, 0, 1);
 
     char *data = new char[nx * ny * 3];
     int progress = 0;

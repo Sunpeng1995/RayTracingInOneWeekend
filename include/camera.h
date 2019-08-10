@@ -9,7 +9,9 @@
 
 class camera {
 public:
-    camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect, float aperture, float focus_dist) {
+    camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect, float aperture, float focus_dist, float t0, float t1) {
+        time0 = t0;
+        time1 = t1;
         lens_radius = aperture / 2;
         float theta = vfov * M_PI / 180.0;
         float half_height = tan(theta/2);
@@ -27,7 +29,8 @@ public:
     ray get_ray(float s, float t) {
         vec3 rd = lens_radius * random_in_unit_disk();
         vec3 offset = u * rd.x() + v * rd.y();
-        return ray(origin + offset, lower_left_corner + s*horizontal + t*vertical - origin - offset);
+        float time = time0 + drand48() * (time1 - time0);
+        return ray(origin + offset, lower_left_corner + s*horizontal + t*vertical - origin - offset, time);
     }
 
     vec3 random_in_unit_disk() {
@@ -44,6 +47,7 @@ private:
     vec3 vertical;
     vec3 u, v, w;
     float lens_radius;
+    float time0, time1;
 };
 
 #endif

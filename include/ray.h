@@ -11,17 +11,20 @@ double drand48() {
 class ray {
 public:
     ray() {}
-    ray(const vec3 &origin, const vec3 &direction) {
+    ray(const vec3 &origin, const vec3 &direction, float time) {
         O = origin;
         D = direction;
+        _time = time;
     }
     vec3 origin() const { return O; }
     vec3 direction() const { return D; }
+    float time() const { return _time; }
     vec3 pointAtParameter(float t) const { return O + t * D; }
 
   private:
     vec3 O;
     vec3 D;
+    float _time;
 };
 
 #endif
