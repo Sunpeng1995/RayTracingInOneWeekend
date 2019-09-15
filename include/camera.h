@@ -1,5 +1,4 @@
-#ifndef __CAMERA_H__
-#define __CAMERA_H__
+#pragma once
 #include <cmath>
 #include "ray.h"
 
@@ -49,5 +48,3 @@ private:
     float lens_radius;
     float time0, time1;
 };
-
-#endif

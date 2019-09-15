@@ -10,6 +10,7 @@
 #include "hitablelist.h"
 #include "camera.h"
 #include "material.h"
+#include "bvh_node.h"
 #include "stb_image_write.h"
 
 // #define DEBUG_LOG
@@ -33,7 +34,7 @@ vec3 color(const ray &r, const hitable *world, int depth) {
     return (1.0 - t) * vec3(1,1,1) + t * vec3(0.5, 0.7, 1.0);
 }
 
-hitable *random_scene() {
+std::vector<hitable*> random_scene() {
     std::vector<hitable*> hitables;
     hitables.push_back(new sphere(vec3(0, -1000, 0), 1000, new lambertian(vec3(0.5, 0.5, 0.5))));
     for (int a = -11; a < 11; a++) {
@@ -62,7 +63,7 @@ hitable *random_scene() {
     hitables.push_back(new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1))));
     hitables.push_back(new sphere(vec3(4, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0)));
 
-    return new hitable_list(hitables);
+    return hitables;
 }
 
 int main() {
@@ -72,7 +73,10 @@ int main() {
 
     // std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
-    hitable *world = random_scene();
+    auto world = random_scene();
+    std::cout << "world created" << std::endl;
+    auto world_bvh = new bvh_node(world.begin(), world.size(), 0.001, FLT_MAX);
+    std::cout << "world bvh created" << std::endl;
 
     vec3 lookfrom(7,2,2);
     vec3 lookat(3,1,0);
@@ -102,7 +106,7 @@ int main() {
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
                 ray r = cam.get_ray(u, v);
-                auto col = color(r, world, 0);
+                auto col = color(r, world_bvh, 0);
                 c1 += col.r();
                 c2 += col.g();
                 c3 += col.b();

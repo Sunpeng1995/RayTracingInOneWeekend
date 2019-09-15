@@ -1,5 +1,4 @@
-#ifndef __RAY_H__
-#define __RAY_H__
+#pragma once
 #include "vec3.h"
 
 #ifdef _WIN32
@@ -26,5 +25,3 @@ public:
     vec3 D;
     float _time;
 };
-
-#endif

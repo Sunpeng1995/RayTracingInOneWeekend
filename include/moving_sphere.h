@@ -1,5 +1,4 @@
-#ifndef __MOVING_SPHERE_H__
-#define __MOVING_SPHERE_H__
+#pragma once
 #include "hitable.h"
 #include "material.h"
 
@@ -10,6 +9,7 @@ public:
         center0(center0), center1(center1), time0(time0), time1(time1), radius(radius), mat(mat) {}
 
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hr) const override;
+    virtual bool bounding_box(float t0, float t1, aabb &box) const override;
     vec3 center(float time) const;
 
 private:
@@ -46,8 +46,12 @@ bool moving_sphere::hit(const ray &r, float t_min, float t_max, hit_record &hr) 
     return false;
 }
 
+bool moving_sphere::bounding_box(float t0, float t1, aabb &box) const {
+    box = aabb::surrounding_box(aabb(center(t0) - vec3(radius), center(t0) + vec3(radius)),
+                                aabb(center(t1) - vec3(radius), center(t1) + vec3(radius)));
+    return true;
+}
+
 vec3 moving_sphere::center(float time) const {
     return center0 + ((time - time0) / (time1 - time0)) * (center1 - center0);
 }
-
-#endif

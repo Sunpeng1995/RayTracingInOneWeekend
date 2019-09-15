@@ -1,5 +1,4 @@
-#ifndef __SPHERE_H__
-#define __SPHERE_H__
+#pragma once
 #include "hitable.h"
 #include "material.h"
 
@@ -9,6 +8,7 @@ public:
     sphere(vec3 center, float radius, material *mat) : center(center), radius(radius), mat(mat) {}
 
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hr) const override;
+    virtual bool bounding_box(float t0, float t1, aabb &box) const override;
 
 private:
     vec3 center;
@@ -43,4 +43,7 @@ bool sphere::hit(const ray &r, float t_min, float t_max, hit_record &hr) const {
     return false;
 }
 
-#endif
+bool sphere::bounding_box(float t0, float t1, aabb &box) const {
+    box = aabb(center - vec3(radius), center + vec3(radius));
+    return true;
+}

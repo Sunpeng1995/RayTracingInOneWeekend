@@ -1,5 +1,4 @@
-#ifndef __MATERIAL_H__
-#define __MATERIAL_H__
+#pragma once
 #include "ray.h"
 #include "hitable.h"
 
@@ -106,5 +105,3 @@ public:
 private:
     float ref_idx;
 };
-
-#endif

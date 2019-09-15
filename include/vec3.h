@@ -1,6 +1,4 @@
-#ifndef __VEC3_H__
-#define __VEC3_H__
-
+#pragma once
 #include <cmath>
 #include <iostream>
 
@@ -11,6 +9,9 @@ public:
         e[0] = e0;
         e[1] = e1;
         e[2] = e2;
+    }
+    vec3(float i) {
+        e[0] = e[1] = e[2] = i;
     }
 
     inline float x() const { return e[0]; }
@@ -76,5 +77,3 @@ inline vec3 cross(const vec3 &v1, const vec3 &v2) {
 inline vec3 operator*(const float &t, const vec3 &v) {
     return vec3(v[0]*t, v[1]*t, v[2]*t);
 }
-
-#endif
