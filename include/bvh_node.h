@@ -22,30 +22,21 @@ bvh_node::bvh_node(std::vector<hitable*>::iterator begin, int n, float t0, float
             aabb box_left, box_right;
             if (!a->bounding_box(0, 0, box_left) || !b->bounding_box(0, 0, box_right))
                 std::cerr << "no boungding box in bvh_node constructor" << std::endl;
-            if (box_left.min().x() - box_right.min().x() < 0)
-                return -1;
-            else
-                return 1;
+            return box_left.min().x() < box_right.min().x();
         });
     else if (axis == 1)
         std::sort(begin, begin + n, [](hitable *a, hitable *b) {
             aabb box_left, box_right;
             if (!a->bounding_box(0, 0, box_left) || !b->bounding_box(0, 0, box_right))
                 std::cerr << "no boungding box in bvh_node constructor" << std::endl;
-            if (box_left.min().y() - box_right.min().y() < 0)
-                return -1;
-            else
-                return 1;
+            return box_left.min().y() < box_right.min().y();
         });
     else
         std::sort(begin, begin + n, [](hitable *a, hitable *b) {
             aabb box_left, box_right;
             if (!a->bounding_box(0, 0, box_left) || !b->bounding_box(0, 0, box_right))
                 std::cerr << "no boungding box in bvh_node constructor" << std::endl;
-            if (box_left.min().z() - box_right.min().z() < 0)
-                return -1;
-            else
-                return 1;
+            return box_left.min().z() < box_right.min().z();
         });
     if (n == 1) {
         left = right = *begin;
