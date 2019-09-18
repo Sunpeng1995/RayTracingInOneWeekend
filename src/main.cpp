@@ -36,7 +36,8 @@ vec3 color(const ray &r, const hitable *world, int depth) {
 
 std::vector<hitable*> random_scene() {
     std::vector<hitable*> hitables;
-    hitables.push_back(new sphere(vec3(0, -1000, 0), 1000, new lambertian(vec3(0.5, 0.5, 0.5))));
+    auto checker = new checker_texture(new constant_texture(vec3(0.2, 0.3, 0.1)), new constant_texture(vec3(0.9)));
+    hitables.push_back(new sphere(vec3(0, -1000, 0), 1000, new lambertian(checker)));
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             float choose_mat = drand48();
@@ -46,7 +47,7 @@ std::vector<hitable*> random_scene() {
                     // hitables.push_back(new sphere(center, 0.2, 
                     //     new lambertian(vec3(drand48()*drand48(), drand48()*drand48(), drand48()*drand48()))));
                     hitables.push_back(new moving_sphere(center, center + vec3(0, 0.5 * drand48(), 0), 0, 1, 0.2, 
-                        new lambertian(vec3(drand48()*drand48(), drand48()*drand48(), drand48()*drand48()))));
+                        new lambertian(new constant_texture(vec3(drand48()*drand48(), drand48()*drand48(), drand48()*drand48())))));
                 }
                 else if (choose_mat < 0.95) { //metal
                     hitables.push_back(new sphere(center, 0.2, 
@@ -60,7 +61,7 @@ std::vector<hitable*> random_scene() {
     }
 
     hitables.push_back(new sphere(vec3(0, 1, 0), 1.0, new dielectric(1.5)));
-    hitables.push_back(new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1))));
+    hitables.push_back(new sphere(vec3(-4, 1, 0), 1.0, new lambertian(new constant_texture(vec3(0.4, 0.2, 0.1)))));
     hitables.push_back(new sphere(vec3(4, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0)));
 
     return hitables;
@@ -72,6 +73,10 @@ int main() {
     int ns = 100;
 
     // std::cout << "P3\n" << nx << " " << ny << "\n255\n";
+
+#ifdef PROFILE_LOG
+    clock_t program_begin = clock();
+#endif
 
     auto world = random_scene();
     std::cout << "world created" << std::endl;
@@ -142,6 +147,12 @@ int main() {
         std::cout << "save failed" << std::endl;
     else
         std::cout << "save success" << std::endl;
+#endif
+
+#ifdef PROFILE_LOG
+    clock_t program_end = clock();
+    double program_time = double(program_end - program_begin) / CLOCKS_PER_SEC;
+    std::cout << "whole program cost " << program_time << "s" << std::endl;
 #endif
 
     return 0;

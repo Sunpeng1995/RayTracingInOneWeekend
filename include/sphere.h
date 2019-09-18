@@ -4,7 +4,7 @@
 
 class sphere : public hitable {
 public:
-    sphere() : sphere(vec3(0,0,0), 1, new lambertian(vec3(1,1,1))) {}
+    sphere() : sphere(vec3(0), 1, new lambertian(new constant_texture(vec3(1)))) {}
     sphere(vec3 center, float radius, material *mat) : center(center), radius(radius), mat(mat) {}
 
     virtual bool hit(const ray &r, float t_min, float t_max, hit_record &hr) const override;
